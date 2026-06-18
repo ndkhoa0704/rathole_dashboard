@@ -1,0 +1,21 @@
+{
+  "name": "rathole_dashboard",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"bun server/index.js\" \"bun client/vite.config.js dev\"",
+    "server": "bun server/index.js",
+    "client": "cd client && bun run dev",
+    "seed": "bun scripts/create-account.js",
+    "build": "cd client && bun run build"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "bcryptjs": "^2.4.3",
+    "ssh2": "^1.17.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

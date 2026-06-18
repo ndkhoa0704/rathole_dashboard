@@ -1,0 +1,12 @@
+{
+  "ssh": {
+    "defaultUser": "root",
+    "defaultPort": 22,
+    "privateKeyPath": "~/.ssh/id_rsa"
+  },
+  "rathole": {
+    "binPath": "/usr/local/bin/rathole",
+    "configDir": "/etc/rathole"
+  },
+  "servers": []
+}

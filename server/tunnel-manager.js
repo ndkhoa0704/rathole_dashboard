@@ -23,13 +23,54 @@ function sshConnect(server) {
       port: server.port || 22,
       username: server.username || 'root',
       readyTimeout: 10000,
+      tryKeyboard: true,      // allow keyboard-interactive auth
     };
 
-    // Prefer password auth if provided, fall back to key
+    const methods = [];
+
+    // 1. Password auth (explicit)
     if (server.password) {
       config.password = server.password;
-    } else if (keyPath && existsSync(keyPath)) {
-      config.privateKey = readFileSync(keyPath);
+      methods.push('password');
+    }
+
+    // 2. Private key auth
+    if (keyPath && existsSync(keyPath)) {
+      try {
+        config.privateKey = readFileSync(keyPath);
+        methods.push('key');
+      } catch (e) {
+        // key file unreadable, skip
+      }
+    }
+
+    // 3. SSH agent auth (always try if agent socket is available)
+    if (process.env.SSH_AUTH_SOCK) {
+      config.agent = process.env.SSH_AUTH_SOCK;
+      methods.push('agent');
+    }
+
+    // 4. Fallback: try default key locations
+    if (methods.length === 0) {
+      const defaults = ['id_rsa', 'id_ed25519', 'id_ecdsa'];
+      for (const name of defaults) {
+        const p = path.join(os.homedir(), '.ssh', name);
+        if (existsSync(p)) {
+          try {
+            config.privateKey = readFileSync(p);
+            methods.push('key(' + name + ')');
+            break;
+          } catch (e) { /* skip */ }
+        }
+      }
+    }
+
+    if (methods.length === 0) {
+      reject(new Error(
+        `SSH ${server.host}: No authentication method available. ` +
+        'Provide a password or ensure an SSH key exists at ~/.ssh/id_rsa'
+      ));
+      return;
     }
 
     conn.on('ready', () => resolve(conn));
